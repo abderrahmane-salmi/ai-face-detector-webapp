@@ -51,37 +51,63 @@ async function initializeFaceDetectorEngine() {
  * Phase B: Establishing Hardware Access & Synchronizing Stream Input
  */
 async function setupWebcam() {
+    // Check if the browser supports the required MediaDevices API
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert("Browser Error: MediaDevices streaming layers are missing.");
         return;
     }
 
     try {
+        // Disable the button during the initialization sequence
         startButton.disabled = true;
         startButton.innerText = "Connecting Feed...";
 
-        const cameraHardwareTrack = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+        // Request permission and capture raw hardware stream pipeline
+        // This opens a browser prompt. Execution pauses here until the user accepts or denies.
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: "user" // Prioritize front-facing selfie camera
+            },
             audio: false
         });
 
-        webcamElement.srcObject = cameraHardwareTrack;
+        // Bind the active camera stream pipeline directly to the video element's source object
+        webcamElement.srcObject = stream;
 
-        // Synchronously block pipeline execution until hardware reports buffer resolution is negotiated
+        // Wait until the video metadata has fully loaded and is ready to execute
+        // We wrap this lifecycle event in a Promise to safely block downstream actions until the feed is hot.
         await new Promise((resolve) => {
-            webcamElement.onloadedmetadata = () => resolve();
+            webcamElement.onloadedmetadata = () => {
+                // The browser now knows the exact resolution and attributes of the incoming video feed
+                resolve();
+            };
         });
 
+        // Play the video stream inside the element & Update UI
         await webcamElement.play();
-        startButton.innerText = "Inference Engine Active";
+        startButton.innerText = "Face Detection Active";
 
         // Trigger the asynchronous recursive object tracking execution loop
         requestAnimationFrame(predictLoop);
 
     } catch (error) {
-        console.error("Camera Binding Exception:", error);
+        // Robust Error Handling Pipeline
+        console.error("Camera Init Error Structure:", error);
+        
+        // Reset button state so user can retry if it was a transient error
         startButton.disabled = false;
         startButton.innerText = "Start Camera";
+
+        // Evaluate specific error signatures thrown by the browser API
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            alert("Permission Denied: Please allow webcam access in your browser settings to run face detection.");
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            alert("Hardware Error: No compatible camera device could be found on your system.");
+        } else {
+            alert(`Stream Initialization Failed: ${error.message}`);
+        }
     }
 }
 
