@@ -23,6 +23,10 @@ let currentFps = 0;
 let lastFpsUpdateTime = performance.now();
 // ----------------------------------------------
 
+// --- NEW: State variable for the toggle feature ---
+let isDetectionActive = false;
+// --------------------------------------------------
+
 /**
  * Phase A: Bootstrapping and compiling the ML Inference Brain
  */
@@ -101,8 +105,11 @@ async function setupWebcam() {
         canvasElement.height = webcamElement.videoHeight;
         // --------------------------------
 
-        // Update UI
-        startButton.innerText = "Face Detection Active";
+        // --- MODIFIED: Update UI and set toggle state ---
+        isDetectionActive = true;
+        startButton.disabled = false; // Re-enable the button so it can act as a toggle
+        startButton.innerText = "Stop Face Detection";
+        // ------------------------------------------------
 
         // Trigger the asynchronous recursive object tracking execution loop
         // This creates a loop that runs: ~60 times per second (like animation)
@@ -135,8 +142,9 @@ async function setupWebcam() {
  * runs the ML model, and draws bounding boxes on the canvas.
  */
 function predictLoop() {
-    // Only proceed if the stream is live and the ML engine is ready
-    if (webcamElement.currentTime !== 0 && faceDetectorEngine !== null) {
+    // --- MODIFIED: Added isDetectionActive check ---
+    // Only proceed if the stream is live, the ML engine is ready, AND detection is toggled ON
+    if (webcamElement.currentTime !== 0 && faceDetectorEngine !== null && isDetectionActive) {
         
         // Clear the canvas from the previous frame to avoid 'ghosting' or artifacts
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -219,4 +227,22 @@ function predictLoop() {
 initializeFaceDetectorEngine();
 
 // UI Event Listener
-startButton.addEventListener('click', setupWebcam);
+// --- MODIFIED: UI Event Listener with Toggle Logic ---
+startButton.addEventListener('click', () => {
+    // If the webcam stream isn't initialized yet, start the setup pipeline
+    if (!webcamElement.srcObject) {
+        setupWebcam();
+    } else {
+        // If the stream is already running, toggle the detection state flag
+        isDetectionActive = !isDetectionActive;
+        
+        if (isDetectionActive) {
+            startButton.innerText = "Stop Face Detection";
+        } else {
+            startButton.innerText = "Start Face Detection";
+            // Clear the canvas immediately so leftover boxes and stats disappear
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        }
+    }
+});
+// -----------------------------------------------------
