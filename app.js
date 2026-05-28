@@ -17,6 +17,12 @@ const canvasCtx = canvasElement.getContext('2d');
 
 let faceDetectorEngine = null;
 
+// --- NEW: State variables for FPS calculation ---
+let frameCount = 0;
+let currentFps = 0;
+let lastFpsUpdateTime = performance.now();
+// ----------------------------------------------
+
 /**
  * Phase A: Bootstrapping and compiling the ML Inference Brain
  */
@@ -135,14 +141,38 @@ function predictLoop() {
         // Clear the canvas from the previous frame to avoid 'ghosting' or artifacts
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-        // Run inference on the current video frame
         const frameTimestampMs = performance.now();
+
+        // --- NEW: Calculate Frames Per Second (FPS) ---
+        frameCount++;
+        if (frameTimestampMs - lastFpsUpdateTime >= 1000) {
+            currentFps = frameCount; // Lock in the frame count every 1000ms (1 second)
+            frameCount = 0;
+            lastFpsUpdateTime = frameTimestampMs;
+        }
+        // ----------------------------------------------
+
+        // Run inference on the current video frame
         const results = faceDetectorEngine.detectForVideo(webcamElement, frameTimestampMs);
+
+        // --- NEW: Track stats for the current frame ---
+        let numFaces = 0;
+        let highestConfidence = 0;
+        // ----------------------------------------------
 
         // Iterate through detected faces and render their bounding boxes
         if (results.detections?.length > 0) {
+            numFaces = results.detections.length;
+
             results.detections.forEach((detection) => {
                 const { originX, originY, width, height } = detection.boundingBox;
+
+                // --- NEW: Calculate Highest Confidence ---
+                const score = Math.round(detection.categories[0].score * 100);
+                if (score > highestConfidence) {
+                    highestConfidence = score;
+                }
+                // -----------------------------------------
 
                 // Set bounding box visual style
                 canvasCtx.lineWidth = 4;
@@ -152,6 +182,33 @@ function predictLoop() {
                 canvasCtx.strokeRect(originX, originY, width, height);
             });
         }
+
+        // --- NEW: Render Live Statistics Overlay ---
+        // Save the current clean matrix state
+        canvasCtx.save(); 
+        
+        // Flip the X-axis for drawing text so the CSS mirror effect double-reverses it into legible text
+        canvasCtx.scale(-1, 1); 
+        
+        // Calculate standard panel placement (Because X is flipped, we shift coordinates into the negative plane)
+        const panelWidth = 200;
+        // Positions the overlay on the visual top-left of the screen
+        const startX = -canvasElement.width + 10; 
+
+        // Draw semi-transparent background panel
+        canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        canvasCtx.fillRect(startX, 10, panelWidth, 90);
+
+        // Draw text metrics
+        canvasCtx.fillStyle = '#ffffff';
+        canvasCtx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        canvasCtx.fillText(`FPS: ${currentFps}`, startX + 15, 35);
+        canvasCtx.fillText(`Faces Detected: ${numFaces}`, startX + 15, 60);
+        canvasCtx.fillText(`Max Confidence: ${numFaces > 0 ? highestConfidence + '%' : 'N/A'}`, startX + 15, 85);
+        
+        // Restore matrix state for the next frame's bounding boxes
+        canvasCtx.restore(); 
+        // -------------------------------------------
     }
 
     // Schedule the next frame render before the next browser repaint
