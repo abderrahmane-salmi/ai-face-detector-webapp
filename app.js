@@ -99,6 +99,7 @@ async function setupWebcam() {
         startButton.innerText = "Face Detection Active";
 
         // Trigger the asynchronous recursive object tracking execution loop
+        // This creates a loop that runs: ~60 times per second (like animation)
         requestAnimationFrame(predictLoop);
 
     } catch (error) {
