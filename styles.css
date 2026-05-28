@@ -34,11 +34,12 @@ body {
     color: #a1a1aa;
 }
 
-/* 1. Parent Container (Establishes local coordinate boundary) */
+/* 1. Parent Container */
 .camera-container {
     position: relative;
-    width: 640px;
-    height: 480px;
+    width: 100%;             /* Let it span the full width of the screen... */
+    max-width: 640px;        /* ...but cap it at 640px for desktop screens */
+    /* height: 480px; <-- REMOVE this fixed height */
     background-color: #1f1f23;
     border-radius: 12px;
     overflow: hidden;
@@ -47,28 +48,27 @@ body {
     margin-bottom: 2rem;
 }
 
-/* 2. Video Element (Pinned to top-left 0,0) */
+/* 2. Video Element */
 .camera-video {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    /* position: absolute; <-- REMOVE this. Make it static so it drives container height */
+    display: block;          /* Removes the bottom whitespace gap typical of inline elements */
+    width: 100%;             /* Fill the container width */
+    height: auto;            /* Automatically calculate height to maintain native aspect ratio */
     object-fit: cover;
     background-color: transparent;
-    transform: scaleX(-1); /* Mirrors webcam stream for intuitive navigation */
+    transform: scaleX(-1);
 }
 
-/* 3. Canvas Element (Layered exactly over the video frame) */
+/* 3. Canvas Element */
 .overlay-canvas {
-    position: absolute;
+    position: absolute;      /* Keep the canvas absolute to float on top of the video */
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10; /* Ensures canvas layer sits perfectly on top of the video */
-    pointer-events: none; /* Mouse clicks bypass canvas layer down to elements beneath */
-    transform: scaleX(-1); /* Mirrors canvas drawing coordinate alignment */
+    width: 100%;             /* Match the video's responsive width */
+    height: 100%;            /* Match the video's responsive height */
+    z-index: 10;
+    pointer-events: none;
+    transform: scaleX(-1);
 }
 
 /* UI Control Panel Styling */

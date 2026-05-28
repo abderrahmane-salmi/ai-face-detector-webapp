@@ -246,3 +246,14 @@ startButton.addEventListener('click', () => {
     }
 });
 // -----------------------------------------------------
+
+// --- NEW: Responsive UI Event Listener ---
+// Resync the canvas internal buffer if the user rotates their mobile device
+// or resizes their desktop browser window.
+window.addEventListener('resize', () => {
+    if (webcamElement.readyState >= 2) { // Ensure video metadata is active
+        canvasElement.width = webcamElement.videoWidth;
+        canvasElement.height = webcamElement.videoHeight;
+    }
+});
+// -----------------------------------------
