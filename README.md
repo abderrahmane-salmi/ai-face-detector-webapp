@@ -22,7 +22,7 @@ The application is a browser-based real-time face detector that uses the user’
 
 ## How to Run
 
-Open the live [demo link]([url](https://abderrahmane-salmi.github.io/ai-face-detector-webapp/)), allow camera access, and the application will start detecting faces in real time.
+Open the live [demo link](https://abderrahmane-salmi.github.io/ai-face-detector-webapp/), allow camera access, and the application will start detecting faces in real time.
 
 You can also run the project locally using VS Code and the Live Server extension.
 
@@ -34,4 +34,4 @@ All face detection is performed locally in the browser. No images, videos, or pe
 
 AI tools were used during development for implementation help, debugging, and explanations. The generated code was manually reviewed and tested before being included in the final project.
 
-Gemini Chat Link: [https://gemini.google.com/share/863d22e98cc5]([url](https://gemini.google.com/share/863d22e98cc5))
+Gemini Chat Link: [https://gemini.google.com/share/863d22e98cc5](https://gemini.google.com/share/863d22e98cc5)
